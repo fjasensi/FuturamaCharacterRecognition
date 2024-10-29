@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import regexp_extract, lit, udf, col
+from pyspark.sql.functions import regexp_extract, lit, udf
 from pyspark.sql.types import ArrayType, FloatType, IntegerType
 from pyspark.ml.classification import RandomForestClassifier
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
@@ -51,7 +51,7 @@ def trainBinaryModel(train_images_df, characters):
         train_images_df = train_images_df.withColumn(character, train_images_df[character].cast(IntegerType()))
 
         # Setup and train a binary classifier
-        rf = RandomForestClassifier(featuresCol="features", labelCol=character, numTrees=10)
+        rf = RandomForestClassifier(featuresCol="features", labelCol=character, numTrees=50)
         model = rf.fit(train_images_df)
 
         models[character] = model
@@ -83,6 +83,9 @@ if __name__ == "__main__":
     for col_name in characters:
         test_images_df = test_images_df.withColumn(col_name, lit(0))
 
+    train_images_df.cache()
+    test_images_df.cache()
+
     # Train binary model for each character
     models = trainBinaryModel(train_images_df, characters)
 
@@ -101,6 +104,7 @@ if __name__ == "__main__":
         evaluator.setPredictionCol(f"prediction_{character}")
         evaluator.setLabelCol(character)
         accuracy = evaluator.evaluate(predictions)
+
         print(f"Precision for {character}: {accuracy:.2f}")
 
         test_images_df = test_images_df.join(predictions.select("path", f"prediction_{character}"), on="path",
@@ -120,3 +124,8 @@ if __name__ == "__main__":
 
     # Write results
     test_images_df.write.mode("overwrite").option("header", "true").csv("submission")
+
+    train_images_df.unpersist()
+    test_images_df.unpersist()
+
+    spark.stop()

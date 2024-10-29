@@ -69,3 +69,7 @@ The final predictions are saved in a CSV file within `submission/`, containing p
 ## License
 
 This project is licensed under the MIT License.
+
+## TODO
+
+- Implement cross-validation for hyperparameter tuning to further optimize model performance in future iterations. This will help in selecting the best combination of parameters (numTrees, maxDepth, maxBins) for improved accuracy and generalization.
